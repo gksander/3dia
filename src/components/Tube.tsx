@@ -9,14 +9,28 @@ export const Tube = React.memo(
     console.log("RENDERING TUBE");
     const curve = new THREE.LineCurve3(
       new THREE.Vector3(x1, y1, z1),
-      new THREE.Vector3(x2, y2, z2)
+      new THREE.Vector3(x2, y2, z2) // TODO: Backoff the angle a bit.
     );
 
     return (
-      <mesh>
-        <tubeGeometry args={[curve, undefined, 0.25]} />
-        <meshStandardMaterial color="#f0f0f0" metalness={0.9} roughness={0.6} />
-      </mesh>
+      <group>
+        <mesh>
+          <tubeGeometry args={[curve, undefined, 0.25]} />
+          <meshStandardMaterial
+            color="#f0f0f0"
+            metalness={0.9}
+            roughness={0.6}
+          />
+        </mesh>
+        <mesh position={[x2, y2, z2]}>
+          <coneGeometry args={[0.3, 0.6, 32, 32]} />
+          <meshStandardMaterial
+            color="#f0f0f0"
+            metalness={0.9}
+            roughness={0.6}
+          />
+        </mesh>
+      </group>
     );
   },
   // Comparison fn
