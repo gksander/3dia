@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Triple } from "../atoms.ts";
+import { Triple } from "../types.ts";
 import * as THREE from "three";
 
 type TubeProps = { from: Triple; to: Triple };

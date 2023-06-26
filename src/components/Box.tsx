@@ -1,14 +1,22 @@
 import * as React from "react";
-import { BoxAtom } from "../atoms.ts";
-import { useAtom } from "jotai/index";
 import { useGesture } from "@use-gesture/react";
 import { getXYPlaneIntersectPointFromEvent } from "../utils/rayUtils.ts";
 import { motion } from "framer-motion-3d";
 import { Text } from "@react-three/drei";
+import {
+  SceneObject,
+  setActiveObject,
+  setSize,
+  setTopLeft,
+} from "../store/scene.slice.ts";
+import { useDispatch } from "react-redux";
+import { useRootSelector } from "../store/store.ts";
 
-export function Box({ atom }: { atom: BoxAtom }) {
-  const [a, setA] = useAtom(atom);
-  const [isActive, setIsActive] = React.useState(false);
+export function Box({ obj }: { obj: SceneObject }) {
+  const dispatch = useDispatch();
+  const isActive = useRootSelector(
+    (state) => state.scene.activeObject === obj._id
+  );
   const boxPointerState = React.useRef({
     down: { at: null as null | number, x: 0, y: 0 },
     startPosition: [0, 0] as [number, number],
@@ -24,7 +32,10 @@ export function Box({ atom }: { atom: BoxAtom }) {
       onPointerDown({ event }) {
         const [x, y] = getXYPlaneIntersectPointFromEvent(event);
         boxPointerState.current.down = { at: Date.now(), x, y };
-        boxPointerState.current.startPosition = [a.topLeft[0], a.topLeft[1]];
+        boxPointerState.current.startPosition = [
+          obj.topLeft[0],
+          obj.topLeft[1],
+        ];
       },
 
       onDrag({ event }) {
@@ -42,12 +53,9 @@ export function Box({ atom }: { atom: BoxAtom }) {
         const newX = Math.round(boxPointerState.current.startPosition[0] + dx);
         const newY = Math.round(boxPointerState.current.startPosition[1] + dy);
 
-        if (newX !== a.topLeft[0] || newY !== a.topLeft[1]) {
+        if (newX !== obj.topLeft[0] || newY !== obj.topLeft[1]) {
           console.log(newX, newY);
-          setA((a) => ({
-            topLeft: [newX, newY],
-            size: a.size,
-          }));
+          dispatch(setTopLeft({ _id: obj._id, topLeft: [newX, newY] }));
         }
       },
       onPointerUp() {
@@ -57,7 +65,7 @@ export function Box({ atom }: { atom: BoxAtom }) {
           Date.now() - boxPointerState.current.down.at <
             CLICK_DURATION_THRESHOLD
         ) {
-          setIsActive((v) => !v);
+          dispatch(setActiveObject(obj._id));
         }
 
         boxPointerState.current.down = { at: null, x: 0, y: 0 };
@@ -74,12 +82,12 @@ export function Box({ atom }: { atom: BoxAtom }) {
         const [x, y] = getXYPlaneIntersectPointFromEvent(event);
         resizeHandleState.current.down = { at: Date.now(), x, y };
         resizeHandleState.current.startPosition = [
-          a.topLeft[0] + a.size[0] / 2,
-          a.topLeft[1] - a.size[1] / 2,
+          obj.topLeft[0] + obj.size[0] / 2,
+          obj.topLeft[1] - obj.size[1] / 2,
         ];
-        resizeHandleState.current.startSize = [a.size[0], a.size[1]];
+        resizeHandleState.current.startSize = [obj.size[0], obj.size[1]];
       },
-      onDrag({ active, event }) {
+      onDrag({ event }) {
         event.stopPropagation();
         if (!resizeHandleState.current.down.at) return;
 
@@ -95,14 +103,10 @@ export function Box({ atom }: { atom: BoxAtom }) {
         );
 
         if (
-          (newWidth >= 1 && newWidth !== a.size[0]) ||
-          (newHeight >= 1 && newHeight !== a.size[1])
+          (newWidth >= 1 && newWidth !== obj.size[0]) ||
+          (newHeight >= 1 && newHeight !== obj.size[1])
         ) {
-          console.log(newWidth, newHeight);
-          setA((a) => ({
-            topLeft: a.topLeft,
-            size: [newWidth, newHeight],
-          }));
+          dispatch(setSize({ _id: obj._id, size: [newWidth, newHeight] }));
         }
       },
     },
@@ -113,18 +117,17 @@ export function Box({ atom }: { atom: BoxAtom }) {
     <>
       <motion.group
         position={[
-          a.topLeft[0] + a.size[0] / 2,
-          a.topLeft[1] - a.size[1] / 2,
+          obj.topLeft[0] + obj.size[0] / 2,
+          obj.topLeft[1] - obj.size[1] / 2,
           0,
         ]}
-        // animate={{
-        //   x: a.topLeft[0] + a.size[0] / 2,
-        //   y: a.topLeft[1] - a.size[1] / 2,
-        // }}
         initial={false}
       >
+        {/* @ts-expect-error i dont know */}
         <mesh {...bind()}>
-          <motion.boxGeometry args={[a.size[0], a.size[1], BOX_THICKNESS]} />
+          <motion.boxGeometry
+            args={[obj.size[0], obj.size[1], BOX_THICKNESS]}
+          />
           {/*<sphereGeometry args={[0.2, 32, 32]} />*/}
           <meshStandardMaterial
             color="orange"
@@ -135,8 +138,9 @@ export function Box({ atom }: { atom: BoxAtom }) {
 
         {/* Resize handle */}
         {isActive && (
+          // @ts-expect-error i dont know
           <mesh
-            position={[a.size[0] / 2, -a.size[1] / 2, BOX_THICKNESS / 2]}
+            position={[obj.size[0] / 2, -obj.size[1] / 2, BOX_THICKNESS / 2]}
             {...resizeBind()}
           >
             <sphereGeometry args={[0.2, 32, 32]} />
@@ -146,7 +150,7 @@ export function Box({ atom }: { atom: BoxAtom }) {
 
         {/* Just testing shit... */}
         <Text
-          maxWidth={a.size[0] - 2 * TEXT_PADDING}
+          maxWidth={obj.size[0] - 2 * TEXT_PADDING}
           fontSize={0.5}
           position={[TEXT_PADDING, -TEXT_PADDING, BOX_THICKNESS + 0.01]}
           textAlign="center"

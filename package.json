@@ -13,13 +13,16 @@
     "@react-spring/three": "^9.7.2",
     "@react-three/drei": "9.70.5",
     "@react-three/fiber": "^8.13.3",
+    "@reduxjs/toolkit": "^1.9.5",
     "@types/three": "^0.152.1",
     "@use-gesture/react": "^10.2.27",
     "framer-motion": "^10.12.17",
     "framer-motion-3d": "^10.12.16",
     "jotai": "^2.2.1",
+    "nanoid": "^4.0.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-redux": "^8.1.1",
     "three": "^0.153.0"
   },
   "devDependencies": {
