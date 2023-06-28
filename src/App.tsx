@@ -11,6 +11,14 @@ import {
   incrementCameraZ,
   incrementCenter,
 } from "./store/cameraPosition.slice.ts";
+import { Connection } from "./components/Connection/Connection.tsx";
+import {
+  Backdrop,
+  CameraControls,
+  OrthographicCamera,
+} from "@react-three/drei";
+import * as THREE from "three";
+import { useControls } from "leva";
 
 export default function App() {
   const dispatch = useDispatch();
@@ -37,12 +45,13 @@ export default function App() {
   return (
     <div style={{ width: "100vw", height: "100vh" }}>
       <Canvas
-        style={{ width: "100%", height: "100%" }}
-        camera={{ position: [centerX, centerY, cameraZ] }}
+        orthographic
+        camera={{ zoom: 50, position: [1, 1, 10], left: -20, right: 20 }}
+        // camera={Camera}
+        // style={{ width: "100%", height: "100%" }}
+        // // camera={{ position: [centerX, centerY, cameraZ] }}
         {...bind()}
-        onPointerUp={(e) => {
-          console.log(e);
-        }}
+        shadows
       >
         <Body />
         <DotGrid />
@@ -51,30 +60,50 @@ export default function App() {
   );
 }
 
+// const Camera = new THREE.OrthographicCamera(-10, 10, 10, -10, 1, 100);
+
 function Body() {
-  usePositionHandler();
-  const objects = useRootSelector((state) => state.scene.objects);
-  // const [b1] = useAtom(box1);
-  // const [b2] = useAtom(box2);
-  //
-  // const x1 = b1.topLeft[0] + b1.size[0];
-  // const y1 = b1.topLeft[1] - b1.size[1] / 2;
-  // const x2 = b2.topLeft[0];
-  // const y2 = b2.topLeft[1] - b2.size[1] / 2;
+  // usePositionHandler();
+  const objects = useRootSelector((state) => state.scene.elements);
+  const { backdropDistance } = useControls({
+    backdropDistance: { value: -2, min: -10, max: -1 },
+  });
 
   return (
     <React.Fragment>
-      <axesHelper args={[5]} />
+      {/*<axesHelper args={[10]} />*/}
       <ambientLight />
-      <pointLight position={[0, 0, 5]} />
+      {/*<pointLight position={[-2, 3, 30]} castShadow={true} />*/}
+      <directionalLight
+        args={["white", 0.7]}
+        position={[-2, 5, 10]}
+        castShadow={true}
+        shadow-mapSize-width={2048}
+        shadow-mapSize-height={2048}
+        shadow-camera-left={-17.78}
+        shadow-camera-right={17.78}
+        shadow-camera-bottom={-20.39}
+        shadow-camera-top={20.39}
+        shadow-camera-near={0.25}
+        shadow-camera-far={100}
+      />
+      {/*<pointLight position={[3, 5, 5]} castShadow />*/}
       {/* Objects */}
-      {Object.values(objects).map((obj) => (
-        <Box obj={obj} key={obj._id} />
-      ))}
-
-      {/*<Tube from={[x1, y1, 0]} to={[x2, y2, 0]} />*/}
+      {Object.values(objects).map((obj) =>
+        obj.type === "block" ? (
+          <Box obj={obj} key={obj._id} />
+        ) : (
+          <Connection connection={obj} key={obj._id} />
+        )
+      )}
 
       {/*<CameraControls />*/}
+
+      {/* Background plane */}
+      <mesh receiveShadow={true} position={[0, 0, backdropDistance]}>
+        <planeGeometry args={[200, 200, 10]} />
+        <meshStandardMaterial color="white" />
+      </mesh>
     </React.Fragment>
   );
 }

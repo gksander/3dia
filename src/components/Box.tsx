@@ -2,17 +2,19 @@ import * as React from "react";
 import { useGesture } from "@use-gesture/react";
 import { getXYPlaneIntersectPointFromEvent } from "../utils/rayUtils.ts";
 import { motion } from "framer-motion-3d";
-import { Text } from "@react-three/drei";
+import { Environment, Text } from "@react-three/drei";
 import {
-  SceneObject,
+  SceneBlock,
   setActiveObject,
   setSize,
   setTopLeft,
 } from "../store/scene.slice.ts";
 import { useDispatch } from "react-redux";
 import { useRootSelector } from "../store/store.ts";
+import { CLICK_DURATION_THRESHOLD } from "../consts.ts";
+import { Text3D } from "./Text3D.tsx";
 
-export function Box({ obj }: { obj: SceneObject }) {
+export function Box({ obj }: { obj: SceneBlock }) {
   const dispatch = useDispatch();
   const isActive = useRootSelector(
     (state) => state.scene.activeObject === obj._id
@@ -54,7 +56,6 @@ export function Box({ obj }: { obj: SceneObject }) {
         const newY = Math.round(boxPointerState.current.startPosition[1] + dy);
 
         if (newX !== obj.topLeft[0] || newY !== obj.topLeft[1]) {
-          console.log(newX, newY);
           dispatch(setTopLeft({ _id: obj._id, topLeft: [newX, newY] }));
         }
       },
@@ -124,7 +125,7 @@ export function Box({ obj }: { obj: SceneObject }) {
         initial={false}
       >
         {/* @ts-expect-error i dont know */}
-        <mesh {...bind()}>
+        <mesh {...bind()} castShadow receiveShadow>
           <motion.boxGeometry
             args={[obj.size[0], obj.size[1], BOX_THICKNESS]}
           />
@@ -148,21 +149,20 @@ export function Box({ obj }: { obj: SceneObject }) {
           </mesh>
         )}
 
-        {/* Just testing shit... */}
-        <Text
-          maxWidth={obj.size[0] - 2 * TEXT_PADDING}
-          fontSize={0.5}
-          position={[TEXT_PADDING, -TEXT_PADDING, BOX_THICKNESS + 0.01]}
-          textAlign="center"
-        >
-          Hello world
-        </Text>
+        <Text3D
+          text="Hello world"
+          position={[
+            -obj.size[0] / 2 + TEXT_PADDING,
+            0,
+            BOX_THICKNESS / 2 + 0.01,
+          ]}
+          size={0.5}
+          height={0.1}
+        />
       </motion.group>
     </>
   );
 }
-
-const CLICK_DURATION_THRESHOLD = 200;
 
 const TEXT_PADDING = 0.1;
 const BOX_THICKNESS = 1;
